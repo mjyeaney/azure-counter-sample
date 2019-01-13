@@ -5,8 +5,6 @@ import { AddressInfo } from "net";
 
 import * as lock from "proper-lockfile";
 import * as io from "fs";
-import { SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION } from "constants";
-import { resolve } from "url";
 
 // Init environment
 dotenv.config();
@@ -33,11 +31,15 @@ const setNoCache = function(res: express.Response){
 // Main API methods
 //
 app.post("/incrementSafe", async (req: express.Request, resp: express.Response) => {
-    await lock.lock("./data/counter.lock", { retries: 5 });
-    await incrementCounter(); 
-    await lock.unlock("./data/counter.lock");
-    
-    resp.status(200).end();
+    lock.lock("./data/counter.lock", { retries: 5 })
+    .then(() => { return incrementCounter(); })
+    .then(() => { resp.status(200).end(); })
+    .catch((reason) => {
+        resp.status(500).json(JSON.stringify(reason)).end();
+    })
+    .finally(() => {
+        lock.unlock("./data/counter.lock");
+    })
 });
 
 app.post("/incrementUnsafe", async (req: express.Request, resp: express.Response) => {
@@ -49,12 +51,21 @@ let incrementCounter = function(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         try {
             io.readFile("./data/counter.json", (err, rawData) => {
-                let counter = JSON.parse(rawData.toString());
-                counter.value++;
-                console.log(`New counter value is: ${counter.value}`);
-                io.writeFile("./data/counter.json", JSON.stringify(counter), (err) => {
-                    resolve();
-                });
+                try {
+                    let counter = JSON.parse(rawData.toString());
+                    counter.value++;
+                    console.log(`New counter value is: ${counter.value}`);
+                    io.writeFile("./data/counter.json", JSON.stringify(counter), (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                } catch (innerErr) {
+                    console.log(`ERROR: ${JSON.stringify(innerErr)}`);
+                    reject(innerErr);
+                }
             });
         } catch (err) {
             console.log(`ERROR: ${JSON.stringify(err)}`);
@@ -67,8 +78,5 @@ let incrementCounter = function(): Promise<void> {
 // Init server listener loop
 //
 const server = app.listen(port, function () {
-    let addrInfo: AddressInfo = server.address() as AddressInfo;
-    let host = addrInfo.address;
-    var port = addrInfo.port;
-    console.log(`Server now listening at http://${host}:${port}`);
+    console.log(`Server started...`);
 });
