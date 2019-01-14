@@ -43,8 +43,9 @@ app.post("/incrementSafe", async (req: express.Request, resp: express.Response) 
 });
 
 app.post("/incrementUnsafe", async (req: express.Request, resp: express.Response) => {
-    await incrementCounter();     
-    resp.status(200).end();
+    incrementCounter()
+    .then(() => { resp.status(200).end(); })
+    .catch((reason) => { resp.status(500).json(reason).end(); });
 });
 
 let incrementCounter = function(): Promise<void> {
