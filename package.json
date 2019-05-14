@@ -16,13 +16,11 @@
     "@types/body-parser": "^1.17.0",
     "@types/dotenv": "^6.1.0",
     "@types/express": "^4.16.0",
-    "@types/jquery": "^3.3.28",
     "@types/proper-lockfile": "^3.0.0",
     "body-parser": "^1.18.3",
     "browserify": "^16.2.3",
     "dotenv": "^6.2.0",
     "express": "^4.16.4",
-    "jquery": "^3.3.1",
     "moment": "^2.23.0",
     "proper-lockfile": "^3.2.0"
   }

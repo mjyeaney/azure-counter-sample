@@ -32,20 +32,20 @@ const setNoCache = function(res: express.Response){
 //
 app.post("/incrementSafe", async (req: express.Request, resp: express.Response) => {
     lock.lock("./data/counter.lock", { retries: 5 })
-    .then(() => { return incrementCounter(); })
-    .then(() => { resp.status(200).end(); })
-    .catch((reason) => {
-        resp.status(500).json(JSON.stringify(reason)).end();
-    })
-    .finally(() => {
-        lock.unlock("./data/counter.lock");
-    })
+        .then(() => { return incrementCounter(); })
+        .then(() => { resp.status(200).end(); })
+        .catch((reason) => {
+            resp.status(500).json(JSON.stringify(reason)).end();
+        })
+        .finally(() => {
+            lock.unlock("./data/counter.lock");
+        })
 });
 
 app.post("/incrementUnsafe", async (req: express.Request, resp: express.Response) => {
     incrementCounter()
-    .then(() => { resp.status(200).end(); })
-    .catch((reason) => { resp.status(500).json(reason).end(); });
+        .then(() => { resp.status(200).end(); })
+        .catch((reason) => { resp.status(500).json(reason).end(); });
 });
 
 let incrementCounter = function(): Promise<void> {
